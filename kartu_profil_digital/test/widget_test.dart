@@ -6,23 +6,30 @@ import 'package:kartu_profil_digital/main.dart';
 import 'package:kartu_profil_digital/services/pref_service.dart';
 
 void main() {
-  testWidgets('Menampilkan open count dan toggle mode gelap', (WidgetTester tester) async {
+  testWidgets('Menampilkan profil dan edit profil tersimpan', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({
-      'open_count': 5,
+      'open_count': 1,
       'is_dark_mode': false,
     });
     final prefs = await PrefService.init();
-    await prefs.increaseOpenCount();
 
     await tester.pumpWidget(MyApp(prefs: prefs));
 
-    expect(find.text('Kartu ini sudah dibuka 6 kali'), findsOneWidget);
-    expect(find.text('Mode Gelap'), findsOneWidget);
+    expect(find.text('Fakhry Firdaus'), findsOneWidget);
 
-    // Toggle switch mode gelap
-    await tester.tap(find.byType(Switch));
+    // Tap icon edit
+    await tester.tap(find.byIcon(Icons.edit));
     await tester.pumpAndSettle();
 
-    expect(prefs.isDarkMode, isTrue);
+    expect(find.text('Edit Profil'), findsOneWidget);
+
+    // Ubah nama
+    await tester.enterText(find.widgetWithText(TextFormField, 'Nama'), 'Mughni Ian');
+    await tester.tap(find.widgetWithText(FilledButton, 'Simpan'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mughni Ian'), findsOneWidget);
+    expect(find.text('Profil tersimpan'), findsOneWidget);
+    expect(prefs.profile.name, 'Mughni Ian');
   });
 }
