@@ -9,6 +9,7 @@ class PrefService {
   static const _kOpenCount = 'open_count';
   static const _kDarkMode = 'is_dark_mode';
   static const _kProfile = 'profile_data';
+  static const _kLastEdited = 'last_edited';
 
   /// Dipanggil sekali saat aplikasi mulai.
   static Future<PrefService> init() async {
@@ -42,5 +43,17 @@ class PrefService {
   Future<void> saveProfile(ProfileData profile) =>
       _prefs.setString(_kProfile, profile.toJson());
 
-  Future<void> clearProfile() => _prefs.remove(_kProfile);
+  Future<void> clearProfile() async {
+    await _prefs.remove(_kProfile);
+    await _prefs.remove(_kLastEdited);
+  }
+
+  // ---------- Challenge Level 1: Terakhir Diedit ----------
+  String? get lastEdited => _prefs.getString(_kLastEdited);
+
+  Future<void> setLastEdited(DateTime time) =>
+      _prefs.setString(_kLastEdited, time.toIso8601String());
+
+  // ---------- Debug ----------
+  Set<String> get debugKeys => _prefs.getKeys();
 }

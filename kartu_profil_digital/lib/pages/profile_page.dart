@@ -22,11 +22,25 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   late ProfileData _profile;
+  String? _lastEdited;
 
   @override
   void initState() {
     super.initState();
     _profile = widget.prefs.profile; // baca data tersimpan
+    _lastEdited = widget.prefs.lastEdited;
+  }
+
+  String _formatDateTime(String isoString) {
+    final dt = DateTime.tryParse(isoString);
+    if (dt == null) return isoString;
+    final local = dt.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final year = local.year.toString();
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$day/$month/$year $hour:$minute';
   }
 
   Future<void> _edit() async {
@@ -36,11 +50,30 @@ class _ProfilePageState extends State<ProfilePage> {
     );
     if (result == null) return; // pengguna menekan back
 
+    final now = DateTime.now();
     await widget.prefs.saveProfile(result);
+    await widget.prefs.setLastEdited(now);
+
     if (!mounted) return;
-    setState(() => _profile = result);
+    setState(() {
+      _profile = result;
+      _lastEdited = widget.prefs.lastEdited;
+    });
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Profil tersimpan')),
+    );
+  }
+
+  Future<void> _reset() async {
+    await widget.prefs.clearProfile();
+    if (!mounted) return;
+    setState(() {
+      _profile = widget.prefs.profile;
+      _lastEdited = widget.prefs.lastEdited;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Profil dikembalikan ke bawaan')),
     );
   }
 
@@ -83,6 +116,16 @@ class _ProfilePageState extends State<ProfilePage> {
                   Text(_profile.title),
                   const SizedBox(height: 12),
                   Text(_profile.bio, textAlign: TextAlign.center),
+                  if (_lastEdited != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Terakhir diedit: ${_formatDateTime(_lastEdited!)}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontStyle: FontStyle.italic,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -93,6 +136,12 @@ class _ProfilePageState extends State<ProfilePage> {
             title: const Text('Mode Gelap'),
             value: widget.isDark,
             onChanged: widget.onThemeChanged,
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: _reset,
+            icon: const Icon(Icons.restore),
+            label: const Text('Reset Profil'),
           ),
           const SizedBox(height: 24),
           Center(
