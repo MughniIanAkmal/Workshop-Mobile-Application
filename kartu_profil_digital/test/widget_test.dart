@@ -1,12 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:kartu_profil_digital/main.dart';
+import 'package:kartu_profil_digital/services/pref_service.dart';
 
 void main() {
-  testWidgets('Menampilkan profil awal', (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Menampilkan open count dari PrefService', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({'open_count': 3});
+    final prefs = await PrefService.init();
+    await prefs.increaseOpenCount();
 
-    expect(find.text('Kartu Profil Digital'), findsOneWidget);
-    expect(find.text('Fakhry Firdaus'), findsOneWidget);
+    await tester.pumpWidget(MyApp(prefs: prefs));
+
+    expect(find.text('Kartu ini sudah dibuka 4 kali'), findsOneWidget);
   });
 }
